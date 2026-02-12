@@ -5,7 +5,7 @@ info:
   description: API for securely uploading/updating owner monthly statements.
 
 servers:
-  - url: https://dicykpvquqrmiuzykhty.supabase.co/functions/v1/clearing-owner-statement
+  - url: https://ojqzsxqkpxagknekhqke.supabase.co/functions/v1/clearing-owner-statement
     description: Supabase Edge Function endpoint
 
 paths:
