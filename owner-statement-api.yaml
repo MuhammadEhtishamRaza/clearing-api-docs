@@ -13,8 +13,7 @@ paths:
     post:
       summary: Upload owner statement
       description: |
-        Stores or updates an owner monthly statement PDF link in the database.
-        Uses shared secret and supports user_id or user_name mapping.
+        Stores  an owner monthly statement PDF link.
       security:
         - ClearingSecret: []
       requestBody:
@@ -24,7 +23,6 @@ paths:
             schema:
               $ref: '#/components/schemas/OwnerStatementRequest'
             example:
-              user_id: 12345
               user_name: "John Manager"
               owner_name: "John Owner"
               statement_month: "2026-02"
