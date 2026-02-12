@@ -1,16 +1,20 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Owner Statement Upload API
   version: 1.0.0
-  description: API for uploading owner monthly statements
+  description: API for securely uploading/updating owner monthly statements.
 
 servers:
   - url: https://dicykpvquqrmiuzykhty.supabase.co/functions/v1/clearing-owner-statement
+    description: Supabase Edge Function endpoint
 
 paths:
   /:
     post:
       summary: Upload owner statement
+      description: |
+        Stores or updates an owner monthly statement PDF link in the database.
+        Uses shared secret and supports user_id or user_name mapping.
       security:
         - ClearingSecret: []
       requestBody:
@@ -18,39 +22,50 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - user_name
-                - owner_name
-                - statement_month
-                - pdf_url
-              properties:
-                user_id:
-                  type: string
-                  description: Optional internal UUID
-                user_name:
-                  type: string
-                owner_name:
-                  type: string
-                statement_month:
-                  type: string
-                  example: 2026-01
-                pdf_url:
-                  type: string
-                  format: uri
+              $ref: '#/components/schemas/OwnerStatementRequest'
+            example:
+              user_id: 12345
+              user_name: "John Manager"
+              owner_name: "John Owner"
+              statement_month: "2026-02"
+              pdf_url: "https://clearing.com/statements/67890.pdf"
       responses:
         "200":
           description: Statement stored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
         "400":
-          description: Bad request
+          description: Bad request (missing or invalid fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         "401":
-          description: Unauthorized
+          description: Unauthorized (invalid secret)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         "404":
           description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         "429":
           description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   securitySchemes:
@@ -58,3 +73,45 @@ components:
       type: apiKey
       in: header
       name: x-clearing-secret
+
+  schemas:
+    OwnerStatementRequest:
+      type: object
+      required:
+        - user_name
+        - owner_name
+        - statement_month
+        - pdf_url
+      properties:
+        user_id:
+          type: integer
+          description: Optional internal Hub user ID (int8)
+        user_name:
+          type: string
+          description: Property manager’s full name
+        owner_name:
+          type: string
+          description: Owner’s full name
+        statement_month:
+          type: string
+          pattern: '^([0-9]{4})-(0[1-9]|1[0-2])$'
+        pdf_url:
+          type: string
+          format: uri
+          description: Publicly accessible PDF link
+
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Statement stored successfully"
+        data:
+          type: array
+          description: Inserted or updated statement records
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
